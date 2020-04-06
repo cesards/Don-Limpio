@@ -1,129 +1,100 @@
 #!/usr/bin/env kscript
 
+//INCLUDE command/GradleCommands.kt
+//INCLUDE command/IDECommands.kt
+//INCLUDE command/ProjectStructureChanges.kt
+//INCLUDE function/FileFunctions.kt
+//INCLUDE function/GradleFunctions.kt
+//INCLUDE function/SystemFunctions.kt
+//INCLUDE function/ADBFunctions.kt
+//INCLUDE function/IDEAFunctions.kt
+
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 
 /** Initializations */
 
-//val wetRun = dryRun.not()
-
+val defaultVerboseIndentation = "     "
+val verbose = true
 
 /** Program flow */
-var option : CleaningOption = selectMRCleanTask()
-while (option == CleaningOption.UNDEFINED) {
-    option = selectMRCleanTask()
+
+var option : KleaningOption = selectMainMenuTask()
+while (option == KleaningOption.UNDEFINED) {
+    option = selectMainMenuTask()
+    if (option == KleaningOption.EXIT) {
+        System.exit(1) // 👋
+    }
 }
-if (option == CleaningOption.EXIT) {
-    System.exit(1) // 💥
-}
-
-println("Well done bro.")
-
-
-
-//val userHome = File(System.getProperty("user.home"))
-//assert(userHome.exists()) { "Unable to determine the user home folder, aborting..." }
-//println(userHome) //     /Users/cdiezsanchez
-
-
-//val gradleHome = locateGradleHome()
-// println(gradleHome) //   /Users/cdiezsanchez/.sdkman/candidates/gradle/current
-
-val workingDir = File(Paths.get("").toAbsolutePath().toString())
-println(workingDir) //   /Users/cdiezsanchez/Workspace-Personal/Tooling/Don-Limpio
-
-val gradlew = if (isOsWindows()) "./gradlew.bat" else "./gradlew"
 
 when (option) {
-    CleaningOption.EXIT -> TODO()
-    CleaningOption.UNDEFINED -> TODO()
-    CleaningOption.GRADLE_UPGRADE -> runTasksForGradleUpdate()
-    CleaningOption.AGP_UPGRADE -> TODO()
-    CleaningOption.PROJECT_STRUCTURE_CHANGED -> TODO()
+    KleaningOption.UNDEFINED -> TODO()
+    KleaningOption.EXIT -> TODO()
+    KleaningOption.PROJECT_STRUCTURE_CHANGED -> TODO()
+    KleaningOption.GRADLE_UPGRADE -> {
+        runCleanupForGradleUpdate() // GradleCommands.kt
+    }
+    KleaningOption.GRADLE_GLOBAL_CLEANUP -> TODO()
+    KleaningOption.AGP_UPDATE -> {
+        runCleanupForIDEUpdate() // IDECommands.kt
+    }
+    KleaningOption.INTELLIJ_ANDROID_STUDIO_GLOBAL_CLEANUP -> {
+        TODO()
+    }
 }
-
-
-
-
-
-
-
 
 /** Helper functions */
 
-fun runTasksForGradleUpdate() {
-    Runtime.getRuntime().run {
-        printInBold("⏳ Executing Gradle clean...")
-        try {
-            exec("$gradlew clean --quiet")
-        } catch (e: IOException) {
-            println(e.message)
-            System.exit(1)
+fun selectMainMenuTask(): KleaningOption {
+    println("Pick one of the following options:")
+    enumValues<KleaningOption>().forEach { option ->
+        if (option != KleaningOption.UNDEFINED) {
+            println("${option.value}. ${option.briefDescription}")
         }
-        println()
     }
-}
+    println()
 
-fun selectMRCleanTask(): CleaningOption {
-    println("Hey there, here are the following options:")
-    println("${CleaningOption.GRADLE_UPGRADE.value}. Gradle-related stuff")
-    println("${CleaningOption.AGP_UPGRADE.value}. IDEA/Android Studio upgrade")
-    println("${CleaningOption.PROJECT_STRUCTURE_CHANGED.value}. Remove old IDE caches ⚠")
-    println("${CleaningOption.EXIT.value}. Cancel")
-
-    val menuOption = "[1-6]".toRegex()
+    val menuOption = "[0-${KleaningOption.values().size - 2}]".toRegex()
     val stdin : String? = readLine()
+    println()
 
     return if (!menuOption.matches(stdin.toString())) {
-        CleaningOption.UNDEFINED
+        KleaningOption.UNDEFINED
     } else {
-        CleaningOption.values()[stdin!!.toInt()]
+        KleaningOption.values()[stdin!!.toInt()]
     }
 }
-
-/*fun locateGradleHome(): File? {
-    val envGradleHome = System.getenv("GRADLE_HOME")?.let { File(it) }
-    val userGradleHome = File(userHome, ".gradle")
-
-    return when {
-        envGradleHome?.exists() == true -> envGradleHome
-        userGradleHome.exists() -> userGradleHome
-        else -> null
-    }
-}*/
-
-fun printInBold(message: String) {
-    if (isOsWindows()) {
-        println(message)
-    } else {
-        println("\u001B[1;37m$message\u001B[0;37m")
-    }
-}
-
-fun isOsWindows() = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
-
-//fun Runtime.execOnWetRun(command: String) = if (wetRun) exec(command) else null
-
-fun Process.printOutput(onlyErrors: Boolean = true) {
-    if (onlyErrors.not()) {
-        inputStream.bufferedReader().lines().forEach { println("     $it") }
-    }
-    errorStream.bufferedReader().lines().forEach { println("     $it") }
-}
-
 
 /** Helper components */
-enum class CleaningOption(val value: Int) {
-    UNDEFINED(0),
-    GRADLE_UPGRADE(1),
-    AGP_UPGRADE(2),
-    PROJECT_STRUCTURE_CHANGED(3),
-    EXIT(4),
+enum class KleaningOption(val value: Int, val briefDescription: String = "", val longDescription: String = "") {
+    UNDEFINED(value = -1),
+    PROJECT_STRUCTURE_CHANGED(value = 1, briefDescription = "TODO"),
+    GRADLE_UPGRADE(value = 2, briefDescription = "Gradle-related stuff"),
+    GRADLE_GLOBAL_CLEANUP(value = 3, briefDescription = "TODO"),
+    AGP_UPDATE(value = 4, briefDescription = "IDEA or Android Studio (AGP) update"),
+    INTELLIJ_ANDROID_STUDIO_GLOBAL_CLEANUP(value = 5, briefDescription = "TODO"),
+    EXIT(value = 0, briefDescription = "Cancel"),
 }
 
 
+// R+D
 
+//val gradleHome : File? = gradleHome()
+//val gradleHome: File? = System.getenv("HOME")?.let { File("$it/.gradle") }
+//var gradleHome : File? = System.getenv("HOME")?.let { File("/Users/user/.gradle") }
+//var gradleHome :File =  File("/Users/user/.gradle")
+
+// println("gradleHome: ${gradleHome!!.path}")
+// println("gradleHome: ${gradleHome!!.absolutePath}")
+
+//val userHome = File(System.getProperty("user.home"))
+//val workingDir = File(Paths.get("").toAbsolutePath().toString())
+//
+
+//val wetRun = dryRun.not()
+
+//fun Runtime.execOnWetRun(command: String) = if (wetRun) exec(command) else null
 
 /*
 println("Script is running with ${args.size} args passed")

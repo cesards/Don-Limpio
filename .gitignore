@@ -1,0 +1,28 @@
+#
+# Gradle
+#
+
+build/
+.gradle/
+
+
+#
+# Mac OS X
+#
+
+.DS_Store
+
+
+#
+# IDEA/Android Studio
+#
+
+*.iml
+*.ipr
+*.iwss
+/captures
+.idea/
+!.idea/vcs.xml
+!.idea/codeStyles/
+!.idea/misc.xml
+!.idea/runConfigurations.xml
